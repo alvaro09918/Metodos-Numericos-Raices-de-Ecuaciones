@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Raíces - Análisis Numérico</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .result-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .info-item strong {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #c33;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #2196f3;
+        }
+
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .result-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔢 Calculadora de Raíces</h1>
+            <p>Métodos de Bisección, Newton-Raphson y Secante</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <h4>📋 Instrucciones de uso:</h4>
+                <ul>
+                    <li>Ingresa una función matemática usando notación estándar</li>
+                    <li>Ejemplos: <code>x^3 - exp(-0.8*x) - 20</code>, <code>3*sin(0.5*x) - 0.5*x + 2</code></li>
+                    <li>Funciones disponibles: sin, cos, tan, exp, log, sqrt, abs, pow</li>
+                    <li>Para Bisección y Secante: define los intervalos [a, b]</li>
+                    <li>Para Newton-Raphson: proporciona un valor inicial x₀</li>
+                </ul>
+            </div>
+
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="ecuacion">Ecuación f(x) = 0:</label>
+                    <input type="text" id="ecuacion" placeholder="Ejemplo: x^3 - exp(-0.8*x) - 20" value="x^3 - exp(-0.8*x) - 20">
+                </div>
+
+                <div class="form-group">
+                    <label for="metodo">Método Numérico:</label>
+                    <select id="metodo">
+                        <option value="biseccion">Bisección</option>
+                        <option value="newton">Newton-Raphson</option>
+                        <option value="secante">Secante</option>
+                        <option value="todos">Comparar todos los métodos</option>
+                    </select>
+                </div>
+
+                <div class="row" id="parametros">
+                    <div class="form-group">
+                        <label for="a">Valor inicial a (o x₀):</label>
+                        <input type="number" id="a" value="2.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="b">Valor inicial b (o x₁):</label>
+                        <input type="number" id="b" value="3.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="tolerancia">Tolerancia:</label>
+                        <input type="number" id="tolerancia" value="0.000001" step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxIter">Iteraciones máximas:</label>
+                        <input type="number" id="maxIter" value="100" min="1">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="calcular()">Calcular Raíz</button>
+            </div>
+
+            <div id="errorMsg"></div>
+            <div id="results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Actualizar etiquetas según el método seleccionado
+        document.getElementById('metodo').addEventListener('change', function() {
+            const metodo = this.value;
+            const labelA = document.querySelector('label[for="a"]');
+            const labelB = document.querySelector('label[for="b"]');
+            
+            if (metodo === 'biseccion' || metodo === 'todos') {
+                labelA.textContent = 'Límite inferior a:';
+                labelB.textContent = 'Límite superior b:';
+            } else if (metodo === 'newton') {
+                labelA.textContent = 'Valor inicial x₀:';
+                labelB.textContent = '(No usado)';
+            } else if (metodo === 'secante') {
+                labelA.textContent = 'Primera aproximación x₀:';
+                labelB.textContent = 'Segunda aproximación x₁:';
+            }
+        });
+
+        // Función para evaluar la expresión matemática
+        function evaluarFuncion(expr, x) {
+            try {
+                const scope = { x: x };
+                return math.evaluate(expr, scope);
+            } catch (e) {
+                throw new Error('Error al evaluar la función');
+            }
+        }
+
+        // Derivada numérica
+        function derivadaNumerica(expr, x, h = 1e-8) {
+            const fx = evaluarFuncion(expr, x);
+            const fxh = evaluarFuncion(expr, x + h);
+            return (fxh - fx) / h;
+        }
+
+        // Método de Bisección
+        function metodoBiseccion(expr, a, b, tol, maxIter) {
+            const iteraciones = [];
+            let fa = evaluarFuncion(expr, a);
+            let fb = evaluarFuncion(expr, b);
+            
+            if (fa * fb > 0) {
+                throw new Error('La función debe tener signos opuestos en los extremos del intervalo');
+            }
+            
+            for (let i = 1; i <= maxIter; i++) {
+                const c = (a + b) / 2;
+                const fc = evaluarFuncion(expr, c);
+                const error = Math.abs(b - a);
+                
+                iteraciones.push({
+                    iteracion: i,
+                    a: a.toFixed(8),
+                    b: b.toFixed(8),
+                    c: c.toFixed(8),
+                    fc: fc.toExponential(4),
+                    error: error.toExponential(4)
+                });
+                
+                if (error < tol || Math.abs(fc) < tol) {
+                    return { raiz: c, iteraciones, convergido: true };
+                }
+                
+                fa = evaluarFuncion(expr, a);
+                if (fa * fc < 0) {
+                    b = c;
+                } else {
+                    a = c;
+                }
+            }
+            
+            return { raiz: (a + b) / 2, iteraciones, convergido: false };
+        }
+
+        // Método de Newton-Raphson
+        function metodoNewton(expr, x0, tol, maxIter) {
+            const iteraciones = [];
+            let x = x0;
+            
+            for (let i = 1; i <= maxIter; i++) {
+                const fx = evaluarFuncion(expr, x);
+                const dfx = derivadaNumerica(expr, x);
+                
+                if (Math.abs(dfx) < 1e-10) {
+                    throw new Error('Derivada muy pequeña, el método diverge');
+                }
+                
+                const xNuevo = x - fx / dfx;
+                const error = Math.abs(xNuevo - x);
+                
+                iteraciones.push({
+                    iteracion: i,
+                    xn: x.toFixed(8),
+                    fxn: fx.toExponential(4),
+                    dfxn: dfx.toExponential(4),
+                    xn1: xNuevo.toFixed(8),
+                    error: error.toExponential(4)
+                });
+                
+                if (error < tol || Math.abs(fx) < tol) {
+                    return { raiz: xNuevo, iteraciones, convergido: true };
+                }
+                
+                x = xNuevo;
+            }
+            
+            return { raiz: x, iteraciones, convergido: false };
+        }
+
+        // Método de la Secante
+        function metodoSecante(expr, x0, x1, tol, maxIter) {
+            const iteraciones = [];
+            
+            for (let i = 1; i <= maxIter; i++) {
+                const fx0 = evaluarFuncion(expr, x0);
+                const fx1 = evaluarFuncion(expr, x1);
+                
+                if (Math.abs(fx1 - fx0) < 1e-10) {
+                    throw new Error('Denominador muy pequeño, el método diverge');
+                }
+                
+                const x2 = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
+                const error = Math.abs(x2 - x1);
+                
+                iteraciones.push({
+                    iteracion: i,
+                    xn_1: x0.toFixed(8),
+                    xn: x1.toFixed(8),
+                    fxn: fx1.toExponential(4),
+                    xn1: x2.toFixed(8),
+                    error: error.toExponential(4)
+                });
+                
+                if (error < tol || Math.abs(fx1) < tol) {
+                    return { raiz: x2, iteraciones, convergido: true };
+                }
+                
+                x0 = x1;
+                x1 = x2;
+            }
+            
+            return { raiz: x1, iteraciones, convergido: false };
+        }
+
+        // Generar tabla de iteraciones
+        function generarTabla(iteraciones, metodo) {
+            let html = '<div class="table-container"><table>';
+            
+            if (metodo === 'biseccion') {
+                html += '<thead><tr><th>Iteración</th><th>a</th><th>b</th><th>c</th><th>f(c)</th><th>Error</th></tr></thead><tbody>';
+                iteraciones.forEach(it => {
+                    html += `<tr>
+                        <td>${it.iteracion}</td>
+                        <td>${it.a}</td>
+                        <td>${it.b}</td>
+                        <td>${it.c}</td>
+                        <td>${it.fc}</td>
+                        <td>${it.error}</td>
+                    </tr>`;
+                });
+            } else if (metodo === 'newton') {
+                html += '<thead><tr><th>Iteración</th><th>xₙ</th><th>f(xₙ)</th><th>f\'(xₙ)</th><th>xₙ₊₁</th><th>Error</th></tr></thead><tbody>';
+                iteraciones.forEach(it => {
+                    html += `<tr>
+                        <td>${it.iteracion}</td>
+                        <td>${it.xn}</td>
+                        <td>${it.fxn}</td>
+                        <td>${it.dfxn}</td>
+                        <td>${it.xn1}</td>
+                        <td>${it.error}</td>
+                    </tr>`;
+                });
+            } else if (metodo === 'secante') {
+                html += '<thead><tr><th>Iteración</th><th>xₙ₋₁</th><th>xₙ</th><th>f(xₙ)</th><th>xₙ₊₁</th><th>Error</th></tr></thead><tbody>';
+                iteraciones.forEach(it => {
+                    html += `<tr>
+                        <td>${it.iteracion}</td>
+                        <td>${it.xn_1}</td>
+                        <td>${it.xn}</td>
+                        <td>${it.fxn}</td>
+                        <td>${it.xn1}</td>
+                        <td>${it.error}</td>
+                    </tr>`;
+                });
+            }
+            
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        // Generar gráfico de convergencia
+        function generarGraficoConvergencia(resultados) {
+            const ctx = document.getElementById('convergenciaChart');
+            if (ctx) {
+                const datasets = [];
+                const colores = {
+                    'biseccion': 'rgb(255, 99, 132)',
+                    'newton': 'rgb(75, 192, 192)',
+                    'secante': 'rgb(153, 102, 255)'
+                };
+                
+                for (const [metodo, resultado] of Object.entries(resultados)) {
+                    const errores = resultado.iteraciones.map(it => parseFloat(it.error));
+                    datasets.push({
+                        label: metodo.charAt(0).toUpperCase() + metodo.slice(1),
+                        data: errores,
+                        borderColor: colores[metodo],
+                        backgroundColor: colores[metodo] + '33',
+                        tension: 0.1
+                    });
+                }
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Convergencia de los Métodos',
+                                font: { size: 16 }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: {
+                                    display: true,
+                                    text: 'Iteración'
+                                }
+                            },
+                            y: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: 'Error (escala logarítmica)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Función principal de cálculo
+        function calcular() {
+            const errorDiv = document.getElementById('errorMsg');
+            const resultsDiv = document.getElementById('results');
+            errorDiv.innerHTML = '';
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.remove('show');
+            
+            try {
+                const expr = document.getElementById('ecuacion').value;
+                const metodo = document.getElementById('metodo').value;
+                const a = parseFloat(document.getElementById('a').value);
+                const b = parseFloat(document.getElementById('b').value);
+                const tol = parseFloat(document.getElementById('tolerancia').value);
+                const maxIter = parseInt(document.getElementById('maxIter').value);
+                
+                if (!expr) {
+                    throw new Error('Por favor ingresa una ecuación');
+                }
+                
+                let resultados = {};
+                
+                if (metodo === 'todos') {
+                    resultados.biseccion = metodoBiseccion(expr, a, b, tol, maxIter);
+                    resultados.newton = metodoNewton(expr, a, tol, maxIter);
+                    resultados.secante = metodoSecante(expr, a, b, tol, maxIter);
+                } else if (metodo === 'biseccion') {
+                    resultados.biseccion = metodoBiseccion(expr, a, b, tol, maxIter);
+                } else if (metodo === 'newton') {
+                    resultados.newton = metodoNewton(expr, a, tol, maxIter);
+                } else if (metodo === 'secante') {
+                    resultados.secante = metodoSecante(expr, a, b, tol, maxIter);
+                }
+                
+                // Mostrar resultados
+                let html = '';
+                
+                for (const [nombreMetodo, resultado] of Object.entries(resultados)) {
+                    const titulo = nombreMetodo.charAt(0).toUpperCase() + nombreMetodo.slice(1);
+                    html += `
+                        <div class="result-card">
+                            <h3>Método de ${titulo}</h3>
+                            <div class="result-info">
+                                <div class="info-item">
+                                    <strong>Raíz encontrada:</strong>
+                                    <span>${resultado.raiz.toFixed(10)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>Iteraciones:</strong>
+                                    <span>${resultado.iteraciones.length}</span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>Estado:</strong>
+                                    <span>${resultado.convergido ? '✓ Convergió' : '⚠ No convergió'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <strong>f(raíz):</strong>
+                                    <span>${evaluarFuncion(expr, resultado.raiz).toExponential(4)}</span>
+                                </div>
+                            </div>
+                            ${generarTabla(resultado.iteraciones, nombreMetodo)}
+                        </div>
+                    `;
+                }
+                
+                if (metodo === 'todos') {
+                    html += `
+                        <div class="chart-container">
+                            <h3>Comparación de Convergencia</h3>
+                            <canvas id="convergenciaChart"></canvas>
+                        </div>
+                    `;
+                }
+                
+                resultsDiv.innerHTML = html;
+                resultsDiv.classList.add('show');
+                
+                if (metodo === 'todos') {
+                    setTimeout(() => generarGraficoConvergencia(resultados), 100);
+                }
+                
+            } catch (error) {
+                errorDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        }
+
+        // Permitir calcular con Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calcular();
+            }
+        });
+    </script>
+</body>
+</html>
